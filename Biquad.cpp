@@ -171,4 +171,5 @@ void Biquad::calcBiquad(void) {
     
     return;
 }
+
 short Biquad::getDivider() {return divider;}

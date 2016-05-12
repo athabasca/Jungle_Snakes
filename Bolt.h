@@ -16,18 +16,18 @@ class Bolt {
     short memWidth;
     short effTail;
 	
-	char *numBolts;
+ unsigned	char *numBolts;
 
     //Bolt* next;
 
     //CRGB * boltData;
   public:
-    boolean en;
+    bool en;
     Bolt ();
-    Bolt (char newWidth, char newColour, char newRailNum, Bolt* newestBolt, char *newNumBolts, int *memForBolts);
-    void callInit (char newWidth, char newColour, char newRailNum, Bolt* newestBolt, char *newNumBolts, int *memForBolts);
+    Bolt (char newWidth, char newColour, char newRailNum, Bolt* newestBolt, unsigned char *newNumBolts, int *memForBolts);
+    void callInit (char newWidth, char newColour, char newRailNum, Bolt* newestBolt, unsigned char *newNumBolts, int *memForBolts);
     ~Bolt();
-    boolean incrBolt ();
+    bool incrBolt ();
     void setHead (short newHead);
     short getHead ();
     short getTail ();

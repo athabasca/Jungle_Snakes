@@ -27,11 +27,18 @@ class Effects {
 
     char colourPalatte;
     short colourPalatteTimeout;
+
+    bool crazyMode;
+    short crazyCounter;
+    short crazyCounterSquareRoot;
+    float sectionAvg;
+    float songAvg;
 	
 	Effects ();
 	void checkBassShake ();
 	void checkPixelSmash ();
 	void checkEffectLevels (float trebleAvg, float midAvg, float bassAvg);
+  void checkSongAvg (float sample, bool newBolt);
 	};
 	
 	#endif

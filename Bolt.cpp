@@ -5,7 +5,7 @@ Bolt::Bolt () {
   en = false;
 }
 
-Bolt::Bolt (char newWidth, char newColour, char newRailNum, Bolt* newestBolt, char *newNumBolts, int *memForBolts) {
+Bolt::Bolt (char newWidth, char newColour, char newRailNum, Bolt* newestBolt, unsigned char *newNumBolts, int *memForBolts) {
   numBolts = newNumBolts;
   *memForBolts -= width * sizeof(CRGB);
   head = -1;
@@ -28,7 +28,7 @@ Bolt::Bolt (char newWidth, char newColour, char newRailNum, Bolt* newestBolt, ch
   en = true;
 }
 
-void Bolt::callInit (char newWidth, char newColour, char newRailNum, Bolt* newestBolt, char *newNumBolts, int *memForBolts) {
+void Bolt::callInit (char newWidth, char newColour, char newRailNum, Bolt* newestBolt, unsigned char *newNumBolts, int *memForBolts) {
   numBolts = newNumBolts;
   *memForBolts -= width * sizeof(CRGB);
   head = -1;
@@ -56,7 +56,7 @@ Bolt::~Bolt () {
   //TODO: replicate functionality of destructor without requiring a pointer member variable in Bolt class
   *numBolts--;
 }
-boolean Bolt::incrBolt () {
+bool Bolt::incrBolt () {
   head++;
   tail++;
   if (tail < 0) {

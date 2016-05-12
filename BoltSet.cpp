@@ -5,7 +5,7 @@
 BoltSet::BoltSet () {}
 
 BoltSet::BoltSet (char newBoltPeriod, char newLowColour, char newHighColour, char newLowWidth, char newHighWidth, \
-                  Biquad newFilter, short newAvgFiresPerSec, char newSetNum, unsigned int *quotaTotal, short *netQuota) {
+                  Biquad newFilter, short newAvgFiresPerSec, unsigned char newSetNum, unsigned int *quotaTotal, short *netQuota) {
   //newestBolt = NULL;
   newestBolt = -1;
   oldestBolt = -1;
@@ -33,10 +33,11 @@ BoltSet::BoltSet (char newBoltPeriod, char newLowColour, char newHighColour, cha
   *netQuota += avgFiresPer10Sec;
   overrideCheck = false;
   avgSignal = 1.0;
+  stability = 1.0;
 }
 
 void BoltSet::callInit (char newBoltPeriod, char newLowColour, char newHighColour, char newLowWidth, char newHighWidth, \
-                        Biquad newFilter, short newAvgFiresPerSec, char newSetNum, unsigned int *quotaTotal, short *netQuota) {
+                        Biquad newFilter, short newAvgFiresPerSec, unsigned char newSetNum, unsigned int *quotaTotal, short *netQuota) {
   //newestBolt = NULL;
   newestBolt = -1;
   oldestBolt = -1;
@@ -64,13 +65,30 @@ void BoltSet::callInit (char newBoltPeriod, char newLowColour, char newHighColou
   *netQuota += avgFiresPer10Sec;
   overrideCheck = false;
   avgSignal = 1.0;
+  stability = 1.0;
 }
 
-void BoltSet::trackBoltFiring (float newSample, Effects *effects) {
+float BoltSet::trackBoltFiring (float newSample, Effects *effects) {
+  static float oldFilterThresh;
+  stability = 0.99*stability + 0.01*abs(oldFilterThresh - filterThresh)/avgSignal;
+  oldFilterThresh = filterThresh;
   boltMagnitude = boltTrigger.process(newSample);
   if (boltMagnitude < 0) boltMagnitude *= -1; //Rectify
   avgSignal = 0.99 * avgSignal + 0.01 * boltMagnitude;
-  if (boltMagnitude > filterThresh) {
+    if (filterThresh < 0.1 || filterThresh > 100) filterThresh = 0.1;
+    else if (millis() - prevFire > 4000) {
+      filterThresh *= 0.01;
+      prevFire = millis();
+    }
+    if (effects->crazyMode && (setNum == 4 || setNum == 4)) {
+      //filterThresh = 0.1;
+      //overrideCheck = true;  
+      //if (setNum == 4 || setNum == 4) overrideCheck = true;      
+    }
+  /* Serial.print(boltMagnitude);
+    Serial.print(" / ");
+    Serial.println(filterThresh);
+  */if (boltMagnitude > filterThresh) {
     if (setNum == 4 && boltMagnitude > filterThresh * effects->overrideLevel) {
       overrideCheck = true;
       effects->overrideLevel = boltMagnitude / filterThresh;
@@ -91,7 +109,7 @@ void BoltSet::trackBoltFiring (float newSample, Effects *effects) {
         effects->bassShakeRatio = 0.95 * effects->bassShakeRatio;
       }
       effects->bassShakeThresh *= (1.0 + (effects->bassShakeRatio - BASSSHAKERATIO));
-      effects->bassShakeDir = (boolean)random(0, 2);
+      effects->bassShakeDir = (bool)random(0, 2);
       effects->bassShakeLevel = boltMagnitude / (filterThresh * (1.0 + effects->bassShakeLag));
       if (effects->bassShakeLevel < 0.0) effects->bassShakeLevel = boltMagnitude / filterThresh;
       effects->colourPalatteTimeout--;
@@ -99,16 +117,18 @@ void BoltSet::trackBoltFiring (float newSample, Effects *effects) {
     triggerMagnitude = boltMagnitude;
     newBoltTrigger = true;
   }
+  if(setNum == 1) 
+    effects->checkSongAvg(boltMagnitude,newBoltTrigger);
+  return boltMagnitude;
 }
 
-boolean BoltSet::checkIfAddNewBolt (float *fastBoltAdvantage, LEDRail **oldestRail, LEDRail (*rail)[NUMRAILS], char *prevSetNum, unsigned int *quotaTotal, char *numBolts, int *memForBolts\
+bool BoltSet::checkIfAddNewBolt (float *fastBoltAdvantage, LEDRail **oldestRail, LEDRail (*rail)[NUMRAILS], unsigned char *prevSetNum, unsigned int *quotaTotal, unsigned char *numBolts, int *memForBolts\
 , LEDRail **newestRail, short *netQuota) {
-  boolean tempToken = false;
+  bool tempToken = false;
   if (newBoltTrigger) {
     maxMag *= 0.95; //Gradually reduce so bolts retain shape
     //Short-impulse feedback (shapes accentuations, adds sustain and release)
     filterThresh *= (1.2 - 0.2 * (float)avgFiresPer10Sec * (float)(millis() - prevFire) / 10000.0); //100% + half of over/undershoot percentage
-    if (filterThresh < 0.1 || filterThresh > 5000) filterThresh = 0.1;
     /*
         Seerial.print("Desired avg: ");
         Seerial.println(avgFiresPer10Sec);
@@ -199,7 +219,7 @@ boolean BoltSet::checkIfAddNewBolt (float *fastBoltAdvantage, LEDRail **oldestRa
     newBoltTrigger = false;
   }
   //Long-acting feedback ensures quotas are approximately met
-  filterThresh *= (0.85 + 0.1 * (float)((*netQuota) * quota + 1) / (float)(avgFiresPer10Sec * (*quotaTotal) + 1)); //gradually reduce thresh so attainable
+  filterThresh *= (0.8 + 0.1 * (float)((*netQuota) * quota + 1) / (float)(avgFiresPer10Sec * (*quotaTotal) + 1)); //gradually reduce thresh so attainable
   return tempToken;
 }
 
@@ -255,7 +275,7 @@ char BoltSet::getSetNum() {
   return setNum;
 }
 
-boolean BoltSet::checkQuota() {
+bool BoltSet::checkQuota() {
   /*Serial.print(quota);
     Serial.print("/");
     Serial.println(avgFiresPer10Sec);
@@ -269,4 +289,8 @@ void BoltSet::resetQuota() {
 
 float BoltSet::getAvg() {
   return avgSignal;
+}
+
+float BoltSet::getStability() {
+  return stability;
 }

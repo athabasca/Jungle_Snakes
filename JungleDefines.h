@@ -11,7 +11,7 @@
 #define FILTERORDER 2
 #define NUMSAMPLES 3 //FILTERORDER+1
 
-#define NUMSTRIPS 1
+#define NUMSTRIPS 4
 #define RAILSPERSTRIP 2
 #define STRIPLEN 100
 #define NUMRAILS (NUMSTRIPS*RAILSPERSTRIP) //Rails for snakes, 2/strand in final rev
@@ -35,6 +35,9 @@
 #define PIXELOUT random(0, 20) < 4 //Likelihood that pixel will be decimated each iter
 #define BASSSHAKERATE effects->bassShakeLag > effects->bassShakeThresh /*random(0,8) < 1*/
 #define BASSSHAKERATIO 0.12
+
+#define BASSDROPCUTOFF 2.6
+#define CRAZYDECAY 140
 
 #define PIXELSMASHMAX 380
 #define PIXELSMASHDUR 10

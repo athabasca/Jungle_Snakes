@@ -1,5 +1,6 @@
 #include "Effects.h"
 #include <stdlib.h> 
+#include <math.h>
 	
     Effects::Effects () {
 
@@ -28,6 +29,12 @@
 
       colourPalatte = 0;
       colourPalatteTimeout = 0;
+
+      crazyMode = false;
+      crazyCounter = 0;
+      crazyCounterSquareRoot = 0;
+      sectionAvg = 1.1;
+      songAvg = 1.1;
 
     }
     void Effects::checkBassShake () {
@@ -95,8 +102,8 @@
              // i++;
               //if(i>0) Serial.println(i);
            // }
-         //   while (pixelSmashGrid[str][px] == (boolean)(tempIncr / abs(tempIncr) + 1) && i < 400);
-            pixelSmashGrid[str][px] = (boolean)(tempIncr / abs(tempIncr) + 1);
+         //   while (pixelSmashGrid[str][px] == (bool)(tempIncr / abs(tempIncr) + 1) && i < 400);
+            pixelSmashGrid[str][px] = (bool)(tempIncr / abs(tempIncr) + 1);
             //if(pixelSmashGrid[str][px]) strip[str][px] = CHSV(0,0,0);
           }
           pixelSmashCounter += tempIncr;
@@ -127,3 +134,23 @@
       bassShakeLevel *= BASSSHAKEDECAY;
       if (bassShakeLevel < bassAvg) bassShakeLevel = bassAvg;
     }
+
+    void Effects::checkSongAvg (float sample, bool newBolt) {
+      sectionAvg = 0.9*sectionAvg + 0.1*sample;
+      songAvg = 0.999*songAvg + 0.001*sample;
+      if (sectionAvg > BASSDROPCUTOFF*songAvg && newBolt) {
+        crazyMode = true;
+        if (!crazyCounterSquareRoot) {
+          crazyCounterSquareRoot = CRAZYDECAY;
+        }
+      }
+      else if (sectionAvg < songAvg) crazyMode = false;
+      if (crazyCounterSquareRoot > 0)  {
+        crazyCounter = pow(crazyCounterSquareRoot--, 2);
+      }
+      else if (crazyCounter)
+        crazyCounter = 0;
+        
+    }
+
+

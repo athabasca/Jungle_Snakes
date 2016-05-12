@@ -21,8 +21,9 @@ class BoltSet {
     char lowColour;
     char highColour;
 
-    boolean overrideCheck;
+    bool overrideCheck;
     float avgSignal;
+    float stability;
 
     unsigned int currentRevPos;
     unsigned int prevRevPos;
@@ -33,7 +34,7 @@ class BoltSet {
     Biquad boltTrigger;
     float boltMagnitude;
     float triggerMagnitude;
-    boolean newBoltTrigger;
+    bool newBoltTrigger;
     float filterThresh;
     short avgFiresPer10Sec;
     int prevFire;
@@ -42,19 +43,20 @@ class BoltSet {
   public:
     BoltSet ();
     BoltSet (char newBoltPeriod, char newLowColour, char newHighColour, char newLowWidth, char newHighWidth, \
-             Biquad newFilter, short newAvgFiresPerSec, char newSetNum, unsigned int *quotaTotal, short *netQuota);
+             Biquad newFilter, short newAvgFiresPerSec, unsigned char newSetNum, unsigned int *quotaTotal, short *netQuota);
     void callInit (char newBoltPeriod, char newLowColour, char newHighColour, char newLowWidth, char newHighWidth, \
-                   Biquad newFilter, short newAvgFiresPerSec, char newSetNum, unsigned int *quotaTotal, short *netQuota);
-    void trackBoltFiring (float newSample, Effects *effects);
-    boolean checkIfAddNewBolt (float *fastBoltAdvantage, LEDRail **oldestRail, LEDRail (*rail)[NUMRAILS], char *prevSetNum, unsigned int *quotaTotal, char *numBolts, int *memForBolts\
+                   Biquad newFilter, short newAvgFiresPerSec, unsigned char newSetNum, unsigned int *quotaTotal, short *netQuota);
+    float trackBoltFiring (float newSample, Effects *effects);
+    bool checkIfAddNewBolt (float *fastBoltAdvantage, LEDRail **oldestRail, LEDRail (*rail)[NUMRAILS], unsigned char *prevSetNum, unsigned int *quotaTotal, unsigned char *numBolts, int *memForBolts\
 , LEDRail **newestRail, short *netQuota);
     void incrBolts (LEDRail (*rail)[NUMRAILS]);
     char getBoltPeriod ();
     char getDivider();
     char getSetNum();
-    boolean checkQuota();
+    bool checkQuota();
     void resetQuota();
     float getAvg();
+    float getStability();
 };
 
 #endif

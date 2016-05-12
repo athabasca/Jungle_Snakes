@@ -51,6 +51,7 @@ void LEDRail::setRailTimeout (short newRailTimeout, char newRecentRailPeriod) {
 }
 
 void LEDRail::setBoltInRail (char memColour, char memStart, char memWidth) {
+  unsigned char offsetDither = random(0,3);
   //memcpy(&((*strip)[memStart]), memData, memWidth);
   //if (memStart > 0) (*strip)[stripNum][memStart - 1] = CHSV(0, 0, 0);
   for (char c = 0; c < memWidth; c++) {
@@ -66,12 +67,15 @@ void LEDRail::setBoltInRail (char memColour, char memStart, char memWidth) {
       else
         (*strip)[stripNum][(RAILLEN - 1) - (memStart + c - (*effects).bassBendCounter)] = CHSV(0, 0, 0);
     }
-    /*if ((*effects).pixelSmashCounter) {
-      if (!flipStrip && (*effects).pixelSmashGrid[stripNum][memStart + c])
+    if ((*effects).crazyCounter && ((memStart + c + offsetDither)%((*effects).crazyCounter/1000+1))) {
+      //Serial.println("pixelate");
+      
+        Serial.println((*effects).crazyCounter);
+      if (!flipStrip)
         (*strip)[stripNum][memStart + c] = CHSV(0, 0, 0);
-      else if (flipStrip && (*effects).pixelSmashGrid[stripNum][(STRIPLEN - 1) - (memStart + c)])
+      else
         (*strip)[stripNum][(STRIPLEN - 1) - (memStart + c)] = CHSV(0, 0, 0);
-    }*/
+    }
   }
 }
 
