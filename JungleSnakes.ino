@@ -111,6 +111,8 @@ void setup() {
   fastBoltAdvantage = 2.0 * (eqBolts[0].getBoltPeriod() - eqBolts[3].getBoltPeriod());
 
   pinMode(RIGHTAUD, INPUT);
+  pinMode(LEFTAUD, INPUT);
+
   Timer1.initialize(SAMPLETIME);
   Timer1.attachInterrupt(signalaquire, SAMPLETIME);
 
@@ -189,6 +191,7 @@ void signalaquire() {
   static short i = 0;
   i++;
   if (i > 100) {
+    Serial.println(sample);
     //effects.checkSongAvg(abs(longavg-sample));
     /*Serial.print(effects.sectionAvg);
       Serial.print(" / ");

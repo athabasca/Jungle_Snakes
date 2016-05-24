@@ -1,6 +1,6 @@
 #define PIN1 9
-#define LEFTAUD A0
-#define RIGHTAUD A1
+#define LEFTAUD A8
+#define RIGHTAUD A6
 
 // Our Global Sample Rate, ~5 kHz
 #define SAMPLETIME 200 //100 //us
