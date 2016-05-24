@@ -48,7 +48,7 @@ class BoltSet {
                    Biquad newFilter, short newAvgFiresPerSec, unsigned char newSetNum, unsigned int *quotaTotal, short *netQuota);
     float trackBoltFiring (float newSample, Effects *effects);
     bool checkIfAddNewBolt (float *fastBoltAdvantage, LEDRail **oldestRail, LEDRail (*rail)[NUMRAILS], unsigned char *prevSetNum, unsigned int *quotaTotal, unsigned char *numBolts, int *memForBolts\
-, LEDRail **newestRail, short *netQuota);
+, short *netQuota);
     void incrBolts (LEDRail (*rail)[NUMRAILS]);
     char getBoltPeriod ();
     char getDivider();

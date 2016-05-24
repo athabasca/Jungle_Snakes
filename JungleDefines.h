@@ -1,8 +1,6 @@
-#define PIN1 3
-#define PIN2 5
-#define PIN3 7
-#define PIN4 9
-#define MIC A8
+#define PIN1 9
+#define LEFTAUD A0
+#define RIGHTAUD A1
 
 // Our Global Sample Rate, ~5 kHz
 #define SAMPLETIME 200 //100 //us
@@ -11,7 +9,7 @@
 #define FILTERORDER 2
 #define NUMSAMPLES 3 //FILTERORDER+1
 
-#define NUMSTRIPS 4
+#define NUMSTRIPS 1
 #define RAILSPERSTRIP 2
 #define STRIPLEN 100
 #define NUMRAILS (NUMSTRIPS*RAILSPERSTRIP) //Rails for snakes, 2/strand in final rev

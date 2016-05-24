@@ -123,7 +123,7 @@ float BoltSet::trackBoltFiring (float newSample, Effects *effects) {
 }
 
 bool BoltSet::checkIfAddNewBolt (float *fastBoltAdvantage, LEDRail **oldestRail, LEDRail (*rail)[NUMRAILS], unsigned char *prevSetNum, unsigned int *quotaTotal, unsigned char *numBolts, int *memForBolts\
-, LEDRail **newestRail, short *netQuota) {
+, short *netQuota) {
   bool tempToken = false;
   if (newBoltTrigger) {
     maxMag *= 0.95; //Gradually reduce so bolts retain shape
@@ -204,9 +204,6 @@ bool BoltSet::checkIfAddNewBolt (float *fastBoltAdvantage, LEDRail **oldestRail,
         // Reconfigure auto-queue
         if (prevRail) { //Remove mid-node, if oldest is not ready for bolt of this size
           prevRail->setNext(currentRail->getNext());
-          if (prevRail->getNext() == NULL) { //If pulled out newest node, set prev as newest
-            *newestRail = prevRail;
-          }
         }
         else { //If pulled out oldest rail, next rail becomes oldest
           //Seerial.println("noprevrail");

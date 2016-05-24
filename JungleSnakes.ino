@@ -21,12 +21,13 @@ unsigned int quotaTotal = 0;
 short netQuota = 0;
 float fastBoltAdvantage = 4.0;
 unsigned char prevSetNum = 0;
+bool refreshing = false;
 
 CRGB strip[NUMSTRIPS][STRIPLEN];
 
 Effects effects;
 
-LEDRail *oldestRail, *newestRail;
+LEDRail *oldestRail;
 LEDRail rail[NUMRAILS];
 
 Biquad eqFilters[4];
@@ -56,15 +57,7 @@ void setup() {
 	//Seerial.print("led rail size: ");
 	//Seerial.println(sizeof(LEDRail));
 
-	const unsigned char pinname = 3;
-	//for (unsigned char c = 0; c < NUMSTRIPS; c++)
-	// {
-	//FastLED.addLeds<NEOPIXEL, pinname>(strip[0], STRIPLEN);
-	//}
 	FastLED.addLeds<NEOPIXEL, PIN1>(strip[0], STRIPLEN);
-	FastLED.addLeds<NEOPIXEL, PIN2>(strip[1], STRIPLEN);
-	FastLED.addLeds<NEOPIXEL, PIN3>(strip[2], STRIPLEN);
-	FastLED.addLeds<NEOPIXEL, PIN4>(strip[3], STRIPLEN);
 	FastLED.clear();
 	FastLED.show();
 
@@ -72,9 +65,7 @@ void setup() {
 		rail[c].callInit(c / RAILSPERSTRIP, c, &strip, &effects);
 	}
 
-	//numRails = sizeof(rail) / sizeof(LEDRail);
 	oldestRail = NULL;
-	newestRail = NULL;
 
 	//bass bolts: 1250Hz sample, 300Hz peak, LPF, 2.0 Q, 6dB Gain
 	eqFilters[0].callInit(bq_type_lowpass, 300.0 / 1250.0, 2.0, 6, 4);
@@ -119,9 +110,7 @@ void setup() {
 
 	fastBoltAdvantage = 2.0 * (eqBolts[0].getBoltPeriod() - eqBolts[3].getBoltPeriod());
 
-	//numBoltSets = sizeof(eqBolts) / sizeof(BoltSet);
-
-	pinMode(MIC, INPUT);
+	pinMode(RIGHTAUD, INPUT);
 	Timer1.initialize(SAMPLETIME);
 	Timer1.attachInterrupt(signalaquire, SAMPLETIME);
 
@@ -152,7 +141,7 @@ void loop() {
 	resetQuotas = true; //Assert true
 	for (c = 0; c < NUMBOLTSETS || c < NUMRAILS; c++) {
 		if (c < NUMBOLTSETS) {
-			if (!eqBolts[c].checkIfAddNewBolt(&fastBoltAdvantage, &oldestRail, &rail, &prevSetNum, &quotaTotal, &numBolts, &memForBolts, &newestRail, &netQuota))
+			if (!eqBolts[c].checkIfAddNewBolt(&fastBoltAdvantage, &oldestRail, &rail, &prevSetNum, &quotaTotal, &numBolts, &memForBolts, &netQuota))
 				delay(REFRESHRATE / NUMBOLTSETS);
 		}
 	}
@@ -166,7 +155,9 @@ void loop() {
 		quotaTotal /= 10;
 	}
 	//if (millis() > startupTimeout + 300)
+	refreshing = true;
 	FastLED.show();
+  refreshing = false;
 }
 
 void ledwork() {
@@ -186,16 +177,7 @@ void ledwork() {
 			if (oldestRail == NULL) {
 				//Seerial.println("nooldest");
 				oldestRail = &(rail[c]);
-				newestRail = &(rail[c]);
 			}
-			else if (newestRail) { //Check if any rails already in queue
-				newestRail->setNext(&(rail[c]));
-			}
-			else {
-				//oldestRail = &(rail[c]);
-				//Seerial.println("oldestset");
-			}
-			newestRail = &(rail[c]);
 			rail[c].setRailAvail(true);
 		}
 	}
@@ -209,29 +191,30 @@ void ledwork() {
 
 void signalaquire() {
 	//Seerial.println("signalaquire");
-	// Read ADC and center so +-512
 	static float sample;
-	sample = (float)analogRead(MIC);
+	sample = (float)analogRead(RIGHTAUD);
 	static float longavg = sample;
 	static short i = 0;
- i++;
+  i++;
 	if (i > 100) {
     //effects.checkSongAvg(abs(longavg-sample));
-    
       /*Serial.print(effects.sectionAvg);
       Serial.print(" / ");
-      Serial.println(effects.songAvg);
-		*/longavg = 0.999 * longavg + 0.001 * sample;
-   i = 0;    
+      Serial.println(effects.songAvg);*/
+    longavg = 0.999 * longavg + 0.001 * sample;
+    i = 0;    
 	}
 	sample = sample - longavg;
-	static unsigned char c;
-	for (c = 0; c < NUMBOLTSETS; c++) {
-		// Serial.println(eqFilters[c].process(sample));
-		if (!(i % eqBolts[c].getDivider()))
-			  eqBolts[c].trackBoltFiring(eqFilters[c].process(eqFilters2[c].process(sample)), &effects);
-		else if (!(i % eqFilters[c].getDivider()))
-			  eqFilters[c].process(eqFilters2[c].process(sample));
+  
+  static unsigned char c;
+  if(!refreshing) {
+	  for (c = 0; c < NUMBOLTSETS; c++) {
+		  // Serial.println(eqFilters[c].process(sample));
+		  if (!(i % eqBolts[c].getDivider()))
+			    eqBolts[c].trackBoltFiring(eqFilters[c].process(eqFilters2[c].process(sample)), &effects);
+		  else if (!(i % eqFilters[c].getDivider()))
+			    eqFilters[c].process(eqFilters2[c].process(sample));
+	  }
 	}
 }
 
