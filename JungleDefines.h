@@ -1,4 +1,4 @@
-#define PIN1 3
+#define PIN1 9
 #define PIN2 5
 #define PIN3 7
 #define PIN4 9
@@ -7,11 +7,11 @@
 // Our Global Sample Rate, ~5 kHz
 #define SAMPLETIME 200 //100 //us
 #define INCRPER 6*1000 //30*1000
-#define REFRESHRATE 6 //80fps
+#define REFRESHRATE 60 //6 //80fps
 #define FILTERORDER 2
 #define NUMSAMPLES 3 //FILTERORDER+1
 
-#define NUMSTRIPS 4
+#define NUMSTRIPS 1
 #define RAILSPERSTRIP 2
 #define STRIPLEN 100
 #define NUMRAILS (NUMSTRIPS*RAILSPERSTRIP) //Rails for snakes, 2/strand in final rev
@@ -32,22 +32,38 @@
 #define BASSBENDDUR 5
 #define BASSBENDATTACKSPEED 6
 #define BASSBENDENVDECAYLONGNESS 3
-#define PIXELOUT random(0, 20) < 4 //Likelihood that pixel will be decimated each iter
+#define PIXELOUT rand()%20 < 4 //Likelihood that pixel will be decimated each iter
 #define BASSSHAKERATE effects->bassShakeLag > effects->bassShakeThresh /*random(0,8) < 1*/
-#define BASSSHAKERATIO 0.12
+#define BASSSHAKERATIO 0.26
 
-#define BASSDROPCUTOFF 2.6
+//TODO: also time rate of change of overall amplitude (drop/end of drop)
+#define BASSDROPCUTOFF(VARIABILITY, VARIABILITYAVG) ((VARIABILITY - VARIABILITYAVG)/VARIABILITYAVG > 0.7)
+#define PIXELBLASTCUTOFF(VARIABILITY, VARIABILITYAVG) ((VARIABILITY - VARIABILITYAVG)/VARIABILITYAVG > 2.4)
+#define RECHARGECUTOFF(VARIABILITY, VARIABILITYAVG) ((VARIABILITY - VARIABILITYAVG)/VARIABILITYAVG > 0.3)
+#define VARAVGCUTOUT 0.1
 #define CRAZYDECAY 140
+
+#define BASSADVANTAGE (-2)
+#define LOWMIDADVANTAGE (-1.5)
+#define HIGHMIDADVANTAGE 0.5
+#define TREBLEADVANTAGE 1
+
+#define BASSPER10SEC 15
+#define LOWMIDPER10SEC 25
+#define HIGHMIDPER10SEC 10
+#define TREBLEPER10SEC 10
 
 #define PIXELSMASHMAX 380
 #define PIXELSMASHDUR 10
 #define PIXELSMASHATTACKSPEED 6
 #define PIXELSMASHENVDECAYLONGNESS 12
 
-#define COLOURPALATTETIMEOUTDUR 12
-#define COLOURPALATTETIMEOUTVAR 6
+#define COLOURPALATTETIMEOUTDUR 4
+#define COLOURPALATTETIMEOUTVAR 2
 
-#define BOLTSPACING 20
+#define TAPERDIV 5
+
+#define BOLTSPACING 6
 
 #define MINCOLOURPALATTEDISP 70
 #define COLOURRANGEWIDTH 12

@@ -5,7 +5,7 @@
 BoltSet::BoltSet () {}
 
 BoltSet::BoltSet (char newBoltPeriod, char newLowColour, char newHighColour, char newLowWidth, char newHighWidth, \
-                  Biquad newFilter, short newAvgFiresPerSec, unsigned char newSetNum, unsigned int *quotaTotal, short *netQuota) {
+                  Biquad newFilter, short newAvgFiresPer10Sec, unsigned char newSetNum, unsigned int *quotaTotal, short *netQuota) {
   //newestBolt = NULL;
   newestBolt = -1;
   oldestBolt = -1;
@@ -23,7 +23,7 @@ BoltSet::BoltSet (char newBoltPeriod, char newLowColour, char newHighColour, cha
   boltMagnitude = 0.0;
   triggerMagnitude = 0.0;
   newBoltTrigger = false;
-  avgFiresPer10Sec = newAvgFiresPerSec;
+  avgFiresPer10Sec = newAvgFiresPer10Sec;
   filterThresh = 4.0 / (float)avgFiresPer10Sec;
   maxMag = 1.0 / (float)avgFiresPer10Sec; //25% of threshold
   prevFire = millis();
@@ -37,7 +37,7 @@ BoltSet::BoltSet (char newBoltPeriod, char newLowColour, char newHighColour, cha
 }
 
 void BoltSet::callInit (char newBoltPeriod, char newLowColour, char newHighColour, char newLowWidth, char newHighWidth, \
-                        Biquad newFilter, short newAvgFiresPerSec, unsigned char newSetNum, unsigned int *quotaTotal, short *netQuota) {
+                        Biquad newFilter, short newAvgFiresPer10Sec, unsigned char newSetNum, unsigned int *quotaTotal, short *netQuota) {
   //newestBolt = NULL;
   newestBolt = -1;
   oldestBolt = -1;
@@ -55,7 +55,7 @@ void BoltSet::callInit (char newBoltPeriod, char newLowColour, char newHighColou
   boltMagnitude = 0.0;
   triggerMagnitude = 0.0;
   newBoltTrigger = false;
-  avgFiresPer10Sec = newAvgFiresPerSec;
+  avgFiresPer10Sec = newAvgFiresPer10Sec;
   filterThresh = 4.0 / (float)avgFiresPer10Sec;
   maxMag = 1.0 / (float)avgFiresPer10Sec; //25% of threshold
   prevFire = millis();
@@ -70,34 +70,34 @@ void BoltSet::callInit (char newBoltPeriod, char newLowColour, char newHighColou
 
 float BoltSet::trackBoltFiring (float newSample, Effects *effects) {
   static float oldFilterThresh;
-  stability = 0.99*stability + 0.01*abs(oldFilterThresh - filterThresh)/avgSignal;
+  stability = 0.99 * stability + 0.01 * abs(oldFilterThresh - filterThresh) / avgSignal;
   oldFilterThresh = filterThresh;
   boltMagnitude = boltTrigger.process(newSample);
   if (boltMagnitude < 0) boltMagnitude *= -1; //Rectify
   avgSignal = 0.99 * avgSignal + 0.01 * boltMagnitude;
-    if (filterThresh < 0.1 || filterThresh > 100) filterThresh = 0.1;
-    else if (millis() - prevFire > 4000) {
-      filterThresh *= 0.01;
-      prevFire = millis();
-    }
-    if (effects->crazyMode && (setNum == 4 || setNum == 4)) {
-      //filterThresh = 0.1;
-      //overrideCheck = true;  
-      //if (setNum == 4 || setNum == 4) overrideCheck = true;      
-    }
+  if (filterThresh < 0.1 || filterThresh > 100) filterThresh = 0.1;
+  else if (millis() - prevFire > 4000) {
+    filterThresh *= 0.01;
+    prevFire = millis();
+  }
+  if (effects->crazyMode && (setNum == 4 || setNum == 4)) {
+    //filterThresh = 0.1;
+    //overrideCheck = true;
+    //if (setNum == 4 || setNum == 4) overrideCheck = true;
+  }
   /* Serial.print(boltMagnitude);
     Serial.print(" / ");
     Serial.println(filterThresh);
-  */if (boltMagnitude > filterThresh) {
-    if (setNum == 4 && boltMagnitude > filterThresh * effects->overrideLevel) {
+  */if (boltMagnitude > (1.0 - effects->variabilityFactor[setNum])*filterThresh && (setNum == 1 || setNum == 2 || (!effects->startup && BASSDROPCUTOFF(effects->variability, effects->variabilityAvg)))) {
+    if (!effects->startup && setNum == 4 && boltMagnitude > filterThresh * (1.0 - 0.5 * effects->variabilityFactor[setNum]) * effects->overrideLevel && BASSDROPCUTOFF(effects->variability, effects->variabilityAvg)) {
       overrideCheck = true;
       effects->overrideLevel = boltMagnitude / filterThresh;
     }
-    else if (setNum == 2 && effects->pixelSmashCounter == 0 && boltMagnitude > filterThresh * effects->pixelSmashLevel) {
+    else if (!effects->startup && setNum == 2 && effects->pixelSmashCounter == 0 && boltMagnitude > filterThresh * (1.0 - effects->variabilityFactor[setNum]) * effects->pixelSmashLevel && BASSDROPCUTOFF(effects->variability, effects->variabilityAvg)) {
       effects->pixelSmashCheck = true;
       effects->pixelSmashLevel = boltMagnitude / filterThresh;
     }
-    else if (setNum == 1 && boltMagnitude > filterThresh * effects->bassShakeLevel && effects->bassShakeCounter == 0 && effects->bassBendCounter == 0) {
+    else if (!effects->startup && setNum == 1 && boltMagnitude > filterThresh * (1.0 - effects->variabilityFactor[setNum]) * effects->bassShakeLevel && effects->bassShakeCounter == 0 && effects->bassBendCounter == 0 && BASSDROPCUTOFF(effects->variability, effects->variabilityAvg)) {
       effects->bassShakeLag = BASSSHAKELAG * (1.0 - effects->bassShakeLevel / (boltMagnitude / filterThresh));
       effects->bassShakeCheck = true;
       if (BASSSHAKERATE) {
@@ -109,7 +109,7 @@ float BoltSet::trackBoltFiring (float newSample, Effects *effects) {
         effects->bassShakeRatio = 0.95 * effects->bassShakeRatio;
       }
       effects->bassShakeThresh *= (1.0 + (effects->bassShakeRatio - BASSSHAKERATIO));
-      effects->bassShakeDir = (bool)random(0, 2);
+      effects->bassShakeDir = (bool)rand()%2;
       effects->bassShakeLevel = boltMagnitude / (filterThresh * (1.0 + effects->bassShakeLag));
       if (effects->bassShakeLevel < 0.0) effects->bassShakeLevel = boltMagnitude / filterThresh;
       effects->colourPalatteTimeout--;
@@ -117,13 +117,18 @@ float BoltSet::trackBoltFiring (float newSample, Effects *effects) {
     triggerMagnitude = boltMagnitude;
     newBoltTrigger = true;
   }
-  if(setNum == 1) 
-    effects->checkSongAvg(boltMagnitude,newBoltTrigger);
+  if (setNum == 1) {
+    effects->checkCrazyMode(newBoltTrigger);
+    effects->bassBandAvg = 0.99 * effects->bassBandAvg + 0.01 * boltMagnitude;
+  }
+  else if (setNum == 4) {
+    effects->checkSongAvg(abs(newSample));
+  }
   return boltMagnitude;
 }
 
 bool BoltSet::checkIfAddNewBolt (float *fastBoltAdvantage, LEDRail **oldestRail, LEDRail (*rail)[NUMRAILS], unsigned char *prevSetNum, unsigned int *quotaTotal, unsigned char *numBolts, int *memForBolts\
-, LEDRail **newestRail, short *netQuota) {
+                                 , short *netQuota, Effects *effects) {
   bool tempToken = false;
   if (newBoltTrigger) {
     maxMag *= 0.95; //Gradually reduce so bolts retain shape
@@ -148,7 +153,7 @@ bool BoltSet::checkIfAddNewBolt (float *fastBoltAdvantage, LEDRail **oldestRail,
       }
     }
     if (*oldestRail == NULL && overrideCheck) {
-      *oldestRail = &(*rail)[random(0, NUMRAILS - 1)];
+      *oldestRail = &(*rail)[rand()%(NUMRAILS - 1)];
       overrideCheck = false;
     }
     if (*oldestRail /*&& !checkQuota()*//* && setNum != prevSetNum*/) {
@@ -204,9 +209,6 @@ bool BoltSet::checkIfAddNewBolt (float *fastBoltAdvantage, LEDRail **oldestRail,
         // Reconfigure auto-queue
         if (prevRail) { //Remove mid-node, if oldest is not ready for bolt of this size
           prevRail->setNext(currentRail->getNext());
-          if (prevRail->getNext() == NULL) { //If pulled out newest node, set prev as newest
-            *newestRail = prevRail;
-          }
         }
         else { //If pulled out oldest rail, next rail becomes oldest
           //Seerial.println("noprevrail");
@@ -219,7 +221,8 @@ bool BoltSet::checkIfAddNewBolt (float *fastBoltAdvantage, LEDRail **oldestRail,
     newBoltTrigger = false;
   }
   //Long-acting feedback ensures quotas are approximately met
-  filterThresh *= (0.8 + 0.1 * (float)((*netQuota) * quota + 1) / (float)(avgFiresPer10Sec * (*quotaTotal) + 1)); //gradually reduce thresh so attainable
+  if (setNum == 1 || setNum == 2 || RECHARGECUTOFF(effects->variability, effects->variabilityAvg))
+    filterThresh *= (0.8 + 0.1 * (float)((*netQuota) * quota + 1) / (float)(avgFiresPer10Sec * (*quotaTotal) + 1)); //gradually reduce thresh so attainable
   return tempToken;
 }
 

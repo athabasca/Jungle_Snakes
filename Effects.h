@@ -32,13 +32,22 @@ class Effects {
     short crazyCounter;
     short crazyCounterSquareRoot;
     float sectionAvg;
-    float songAvg;
+    float prevSectionAvg;
+    float variability;
+    float variabilityAvg;
+    //float eqBandsAvg;
+    float variabilityFactor[NUMBOLTSETS];
+    bool startup;
+
+    float eqBandsAvg;
+    float bassBandAvg;
 	
-	Effects ();
+	Effects (int seed);
 	void checkBassShake ();
 	void checkPixelSmash ();
 	void checkEffectLevels (float trebleAvg, float midAvg, float bassAvg);
-  void checkSongAvg (float sample, bool newBolt);
+  float checkSongAvg (float sample);
+  void checkCrazyMode (bool newBolt);
 	};
 	
 	#endif
