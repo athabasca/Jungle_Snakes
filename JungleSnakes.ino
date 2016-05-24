@@ -25,7 +25,7 @@ bool refreshing = false;
 
 CRGB strip[NUMSTRIPS][STRIPLEN];
 
-Effects effects;
+Effects effects = Effects((int)analogRead(LEFTAUD));
 
 LEDRail *oldestRail;
 LEDRail rail[NUMRAILS];
@@ -47,6 +47,7 @@ void setup() {
   startupTimeout = millis();
   delay(100);
   Serial.begin(115200);
+
   boltlock = false;
   //Seerial.print("boltset size: ");
   //Seerial.println(sizeof(BoltSet));
@@ -68,69 +69,60 @@ void setup() {
   oldestRail = NULL;
 
   //bass bolts: 1250Hz sample, 300Hz peak, LPF, 2.0 Q, 6dB Gain
-  eqFilters[0].callInit(bq_type_lowpass, 300.0 / 1250.0, 2.0, 6, 4);
+
+  eqFilters[0].callInit(bq_type_bandpass, 180.0 / 1250.0, 1.0, 6, 4);
   //bass bolts cascade: 1250Hz sample, 240Hz peak, LPF, 2.0 Q, 6dB Gain
-  eqFilters2[0].callInit(bq_type_lowpass, 240.0 / 1250.0, 2.0, 6, 4);
+  eqFilters2[0].callInit(bq_type_bandpass, 140.0 / 1250.0, 1.0, 6, 4);
 
   //low mid bolts: 2.5k sample, 700Hz peak, 2 Q, 6dB Gain
-  eqFilters[1].callInit(bq_type_bandpass, 700.0 / 2500.0, 2.0, 6, 2);
+  eqFilters[1].callInit(bq_type_bandpass, 700.0 / 2500.0, 0.1, 6, 2);
   //low mid bolts cascade: 2.5k sample, 660Hz peak, 2 Q, 6dB Gain
-  eqFilters2[1].callInit(bq_type_bandpass, 660.0 / 2500.0, 2.0, 6, 2);
+  eqFilters2[1].callInit(bq_type_bandpass, 660.0 / 2500.0, 0.1, 6, 2);
 
   //high mid bolts: 2.5k sample, 1.2k peak, 2 Q, 6dB Gain
-  eqFilters[2].callInit(bq_type_bandpass, 1200.0 / 2500.0, 2.0, 6, 2);
+  eqFilters[2].callInit(bq_type_bandpass, 1200.0 / 2500.0, 10.0, 6, 2);
   //high mid bolts cascade: 2.5k sample, 1.1k peak, 2 Q, 6dB Gain
-  eqFilters2[2].callInit(bq_type_bandpass, 1100.0 / 2500.0, 2.0, 6, 2);
+  eqFilters2[2].callInit(bq_type_bandpass, 1100.0 / 2500.0, 10.0, 6, 2);
 
   //high bolts: 5k sample, 2k peak, HPF, 2 Q, 6dB Gain
-  eqFilters[3].callInit(bq_type_highpass, 2000.0 / 5000.0, 2.0, 6, 1);
+  eqFilters[3].callInit(bq_type_highpass, 2000.0 / 5000.0, 10.0, 6, 1);
   //high bolts cascade: 5k sample, 2.1k peak, HPF, 2 Q, 6dB Gain
-  eqFilters2[3].callInit(bq_type_highpass, 2100.0 / 5000.0, 2.0, 6, 1);
+  eqFilters2[3].callInit(bq_type_highpass, 2100.0 / 5000.0, 10.0, 6, 1);
 
   //Envelope filters: 78.125Hz sample, LPF, 10Hz peak, .707 Q, 6dB Gain
   Biquad tempFilter;
-  tempFilter.callInit(bq_type_lowpass, 10.0 / 78.125, 0.707, 6, 64);
+  tempFilter.callInit(bq_type_lowpass, 8.0 / 78.125, 2.0, 6, 64);
 
   char minColour, maxColour;
   minColour = 0;
   maxColour = minColour + COLOURRANGEWIDTH;
-  eqBolts[0].callInit(7, minColour, maxColour, 24, 36, tempFilter, 20, 1, &quotaTotal, &netQuota);
+  eqBolts[0].callInit(7, minColour, maxColour, 24, 36, tempFilter, BASSPER10SEC, 1, &quotaTotal, &netQuota);
 
   minColour = SLOWCOLOURSEP;
   maxColour = minColour + COLOURRANGEWIDTH;
-  eqBolts[1].callInit(6, minColour, maxColour, 18, 24, tempFilter, 15, 2, &quotaTotal, &netQuota);
+  eqBolts[1].callInit(6, minColour, maxColour, 18, 24, tempFilter, LOWMIDPER10SEC, 2, &quotaTotal, &netQuota);
 
   minColour = SLOWCOLOURSEP + COLOURGROUPSEP;
   maxColour = minColour + COLOURRANGEWIDTH;
-  eqBolts[2].callInit(2, minColour, maxColour, 14, 20, tempFilter, 10, 3, &quotaTotal, &netQuota);
+  eqBolts[2].callInit(2, minColour, maxColour, 14, 20, tempFilter, HIGHMIDPER10SEC, 3, &quotaTotal, &netQuota);
 
   minColour = SLOWCOLOURSEP + COLOURGROUPSEP + FASTCOLOURSEP;
   maxColour = minColour + COLOURRANGEWIDTH;
-  eqBolts[3].callInit(1, minColour, maxColour, 8, 12, tempFilter, 20, 4, &quotaTotal, &netQuota);
+  eqBolts[3].callInit(1, minColour, maxColour, 8, 12, tempFilter, TREBLEPER10SEC, 4, &quotaTotal, &netQuota);
 
   fastBoltAdvantage = 2.0 * (eqBolts[0].getBoltPeriod() - eqBolts[3].getBoltPeriod());
 
   pinMode(RIGHTAUD, INPUT);
   pinMode(LEFTAUD, INPUT);
-
+  
   Timer1.initialize(SAMPLETIME);
   Timer1.attachInterrupt(signalaquire, SAMPLETIME);
 
   Timer3.initialize(INCRPER);
   Timer3.attachInterrupt(ledwork, INCRPER);
-
 }
 
 void loop() {
-  static int stabilityTimeout = millis() / 200;
-  if (millis() / 200 - stabilityTimeout > 1) {
-    float tempStab = 0.0;
-    for (unsigned char i = 0; i < NUMBOLTSETS; i++)
-      tempStab += eqBolts[i].getStability();
-    Serial.println(tempStab);
-    stabilityTimeout = millis() / 200;
-  }
-
   while (boltlock) { //Wait for boltlock to turn off
     delay(1); //Poll every 1 ms
   }
@@ -140,7 +132,7 @@ void loop() {
   resetQuotas = true; //Assert true
   for (c = 0; c < NUMBOLTSETS || c < NUMRAILS; c++) {
     if (c < NUMBOLTSETS) {
-      if (!eqBolts[c].checkIfAddNewBolt(&fastBoltAdvantage, &oldestRail, &rail, &prevSetNum, &quotaTotal, &numBolts, &memForBolts, &netQuota))
+      if (!eqBolts[c].checkIfAddNewBolt(&fastBoltAdvantage, &oldestRail, &rail, &prevSetNum, &quotaTotal, &numBolts, &memForBolts, &netQuota, &effects))
         delay(REFRESHRATE / NUMBOLTSETS);
     }
   }
@@ -153,6 +145,11 @@ void loop() {
     }
     quotaTotal /= 10;
   }
+  if (effects.startup && millis() > startupTimeout + 5000)
+    effects.startup = false;
+  // for (char temp = 0; temp < 100; temp++) {
+  //  strip[3][temp] = CHSV(255,100,100);
+  // }
 }
 
 void ledwork() {
@@ -178,7 +175,7 @@ void ledwork() {
   effects.checkPixelSmash();
   effects.checkEffectLevels(eqBolts[3].getAvg(), eqBolts[1].getAvg(), eqBolts[0].getAvg());
   FastLED.show();
-  
+
   boltlock = false;
 }
 
@@ -204,8 +201,9 @@ void signalaquire() {
   static unsigned char c;
   for (c = 0; c < NUMBOLTSETS; c++) {
     // Serial.println(eqFilters[c].process(sample));
-    if (!(i % eqBolts[c].getDivider()))
+    if (!((i + c) % eqBolts[c].getDivider())) {
       eqBolts[c].trackBoltFiring(eqFilters[c].process(eqFilters2[c].process(sample)), &effects);
+    }
     else if (!(i % eqFilters[c].getDivider()))
       eqFilters[c].process(eqFilters2[c].process(sample));
   }
@@ -226,3 +224,4 @@ uint32_t FreeRam() { // for Teensy 3.0
   // The difference is the free, available ram.
   return stackTop - heapTop;
 }
+

@@ -51,15 +51,15 @@ void LEDRail::setRailTimeout (short newRailTimeout, char newRecentRailPeriod) {
 }
 
 void LEDRail::setBoltInRail (char memColour, char memStart, char memWidth) {
-  unsigned char offsetDither = random(0,3);
+  unsigned char offsetDither = rand() % 3;
   //memcpy(&((*strip)[memStart]), memData, memWidth);
   //if (memStart > 0) (*strip)[stripNum][memStart - 1] = CHSV(0, 0, 0);
   for (char c = 0; c < memWidth; c++) {
     if (memStart + c - (*effects).bassBendCounter >= 0) {
       if (!flipStrip)
-        (*strip)[stripNum][memStart + c - (*effects).bassBendCounter] = CHSV((256 + memColour + (*effects).colourPalatte + ((*effects).bassShakeDir * (*effects).bassShakeCounter) / 2) % 256, 255 - (*effects).bassShakeCounter, 255 * (memWidth - abs(memWidth - 8 * c / 5)) / memWidth);
+        (*strip)[stripNum][memStart + c - (*effects).bassBendCounter] = CHSV((256 + memColour + (*effects).colourPalatte + ((*effects).bassShakeDir * (*effects).bassShakeCounter) / 2) % 256, 255 - (*effects).bassShakeCounter, 255 * (memWidth - abs(memWidth - 8 * c / 5)) / (memWidth + (memStart + c - (*effects).bassBendCounter) / TAPERDIV));
       else
-        (*strip)[stripNum][(STRIPLEN - 1) - (memStart + c - (*effects).bassBendCounter)] = CHSV((256 + memColour + (*effects).colourPalatte + ((*effects).bassShakeDir * (*effects).bassShakeCounter) / 2) % 256, 255 - (*effects).bassShakeCounter, 255 * (memWidth - abs(memWidth - 8 * c / 5)) / memWidth);
+        (*strip)[stripNum][(STRIPLEN - 1) - (memStart + c - (*effects).bassBendCounter)] = CHSV((256 + memColour + (*effects).colourPalatte + ((*effects).bassShakeDir * (*effects).bassShakeCounter) / 2) % 256, 255 - (*effects).bassShakeCounter, 255 * (memWidth - abs(memWidth - 8 * c / 5)) / (memWidth + (memStart + c - (*effects).bassBendCounter) / TAPERDIV));
     }
     else if (PIXELOUT) { //Twinkle-out effect!
       if (!flipStrip)
@@ -67,10 +67,10 @@ void LEDRail::setBoltInRail (char memColour, char memStart, char memWidth) {
       else
         (*strip)[stripNum][(RAILLEN - 1) - (memStart + c - (*effects).bassBendCounter)] = CHSV(0, 0, 0);
     }
-    if ((*effects).crazyCounter && ((memStart + c + offsetDither)%((*effects).crazyCounter/1000+1))) {
+    if ((*effects).crazyCounter && ((memStart + c + offsetDither) % ((*effects).crazyCounter / 1000 + 1))) {
       //Serial.println("pixelate");
-      
-        Serial.println((*effects).crazyCounter);
+
+      //Serial.println((*effects).crazyCounter);
       if (!flipStrip)
         (*strip)[stripNum][memStart + c] = CHSV(0, 0, 0);
       else
