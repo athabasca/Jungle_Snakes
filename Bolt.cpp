@@ -29,26 +29,7 @@ Bolt::Bolt (char newWidth, char newColour, char newRailNum, Bolt* newestBolt, un
 }
 
 void Bolt::callInit (char newWidth, char newColour, char newRailNum, Bolt* newestBolt, unsigned char *newNumBolts, int *memForBolts) {
-  numBolts = newNumBolts;
-  *memForBolts -= width * sizeof(CRGB);
-  head = -1;
-  width = newWidth;
-  *memForBolts += width * sizeof(CRGB);
-  memStart = width;
-  memWidth = 0;
-  railNum = newRailNum;
-  tail = head - width + 1;
-  effTail = -1;
-  colour = newColour;
-  wiggle = 0;
-  //boltData = new CRGB[width]();
-  //for (char i = 0; i < width; i++) { //NOTE it starts at tail cause it's copying into mem starting at tail
-  //  boltData[i] = CHSV(colour, 255, 255 * (width - abs(width - 8 * i / 5)) / width);
-  //}
-  //next = newestBolt;
-  *numBolts++;
-  //Seerial.println(numBolts);
-  en = true;
+  Bolt(newWidth, newColour, newRailNum, newestBolt, newNumBolts, memForBolts);
 }
 
 Bolt::~Bolt () {

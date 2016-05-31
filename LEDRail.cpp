@@ -16,16 +16,7 @@ LEDRail::LEDRail (char newStripNum, char newRailNum, CRGB (*newStrip)[NUMSTRIPS]
 }
 
 void LEDRail::callInit (char newStripNum, char newRailNum, CRGB (*newStrip)[NUMSTRIPS][STRIPLEN], Effects *newEffects) {
-  stripNum = newStripNum;
-  railNum = newRailNum;
-  railTimeout = 0;
-  recentRailPeriod = 0;
-  railAvail = false;
-  next = NULL;
-  strip = newStrip;
-  effects = newEffects;
-  if (!(railNum % 2)) flipStrip = false;
-  else flipStrip = true;
+  LEDRail(newStripNum, newRailNum, newStrip, newEffects);
 }
 
 bool LEDRail::incrRail () {

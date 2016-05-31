@@ -38,34 +38,10 @@ BoltSet::BoltSet (char newBoltPeriod, char newLowColour, char newHighColour, cha
 
 void BoltSet::callInit (char newBoltPeriod, char newLowColour, char newHighColour, char newLowWidth, char newHighWidth, \
                         Biquad newFilter, short newAvgFiresPer10Sec, unsigned char newSetNum, unsigned int *quotaTotal, short *netQuota) {
-  //newestBolt = NULL;
-  newestBolt = -1;
-  oldestBolt = -1;
-  boltPeriod = newBoltPeriod;
-  lowColour = newLowColour;
-  highColour = newHighColour;
-  lowWidth = newLowWidth;
-  highWidth = newHighWidth;
-  currentRevPos = 0;
-  prevRevPos = 0;
-  boltTrigger = newFilter;
-  //*boltTrigger = newFilter;
-  //boltTrigger = new Biquad(bq_type_lowpass, 10.0 / 78.125, 0.707, 6, 64);
-  //boltTrigger = new Biquad();
-  boltMagnitude = 0.0;
-  triggerMagnitude = 0.0;
-  newBoltTrigger = false;
-  avgFiresPer10Sec = newAvgFiresPer10Sec;
-  filterThresh = 4.0 / (float)avgFiresPer10Sec;
-  maxMag = 1.0 / (float)avgFiresPer10Sec; //25% of threshold
-  prevFire = millis();
-  setNum = newSetNum;
-  quota = 10 * avgFiresPer10Sec; //Just to get things started without causing a transient
-  *quotaTotal += quota;
-  *netQuota += avgFiresPer10Sec;
-  overrideCheck = false;
-  avgSignal = 1.0;
-  stability = 1.0;
+  BoltSet(newBoltPeriod, newLowColour, newHighColour, 
+          newLowWidth, newHighWidth, newFilter, 
+          newAvgFiresPer10Sec, newSetNum, 
+          quotaTotal, netQuota);
 }
 
 float BoltSet::trackBoltFiring (float newSample, Effects *effects) {

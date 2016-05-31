@@ -40,9 +40,7 @@ Biquad::~Biquad() {
 }
 
 void Biquad::callInit(int type, double Fc, double Q, double peakGainDB, short newDivider) {
-    setBiquad(type, Fc, Q, peakGainDB);
-    z1 = z2 = 0.0;
-    divider = newDivider;
+    Biquad(type, Fc, Q, peakGainDB, newDivider);
 }
 
 void Biquad::setType(int type) {
