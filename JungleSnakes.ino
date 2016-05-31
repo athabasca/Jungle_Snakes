@@ -59,6 +59,7 @@ void setup() {
   //Seerial.println(sizeof(LEDRail));
 
   FastLED.addLeds<NEOPIXEL, PIN1>(strip[0], STRIPLEN);
+  FastLED.addLeds<NEOPIXEL, PIN2>(strip[1], STRIPLEN);
   FastLED.clear();
   FastLED.show();
 
@@ -174,7 +175,10 @@ void ledwork() {
   effects.checkBassShake();
   effects.checkPixelSmash();
   effects.checkEffectLevels(eqBolts[3].getAvg(), eqBolts[1].getAvg(), eqBolts[0].getAvg());
-  FastLED.show();
+
+  static byte counter = 0;
+  counter = (counter + 1)%REFRESHDELAY;
+  if(!counter) { FastLED.show(); }
 
   boltlock = false;
 }

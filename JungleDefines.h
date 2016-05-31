@@ -1,15 +1,17 @@
-#define PIN1 9
+#define PIN1 14
+#define PIN2 16
 #define LEFTAUD A8
 #define RIGHTAUD A6
 
 // Our Global Sample Rate, ~5 kHz
 #define SAMPLETIME 200 //100 //us
 #define INCRPER 6*1000 //30*1000
-#define REFRESHRATE 60 //6 //80fps
+#define REFRESHRATE 6
+#define REFRESHDELAY 4//not working? increment me by +1 until i start working!
 #define FILTERORDER 2
 #define NUMSAMPLES 3 //FILTERORDER+1
 
-#define NUMSTRIPS 1
+#define NUMSTRIPS 2
 #define RAILSPERSTRIP 2
 #define STRIPLEN 100
 #define NUMRAILS (NUMSTRIPS*RAILSPERSTRIP) //Rails for snakes, 2/strand in final rev
